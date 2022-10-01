@@ -1,0 +1,19 @@
+Use PowerShell to Create a Bootable USB Drive:
+
+$Results = Get-Disk |
+Where-Object BusType -eq USB |
+Out-GridView -Title 'Select USB Drive to Format' -OutputMode Single |
+Clear-Disk -RemoveData -RemoveOEM -Confirm:$false -PassThru |
+New-Partition -UseMaximumSize -IsActive -AssignDriveLetter |
+Format-Volume -FileSystem FAT32
+
+
+
+$Volumes = (Get-Volume).Where({$_.DriveLetter}).DriveLetter
+Mount-DiskImage -ImagePath C:\ISO\Windows.ISO
+$ISO = (Compare-Object -ReferenceObject $Volumes -DifferenceObject (Get-Volume).Where({$_.DriveLetter}).DriveLetter).InputObject
+
+
+Set-Location -Path "$($ISO):\boot"
+bootsect.exe /nt60 "$($Results.DriveLetter):"
+Copy-Item -Path "$($ISO):\*" -Destination "$($Results.DriveLetter):" -Recurse -Verbose
